@@ -1,4 +1,8 @@
-# AngularNgrxStore
+# Angular Ngrx State Management Pattern
+
+> Getting familiar with NgRx Angular state management.
+
+---
 
 ## Create model interface file
 
@@ -137,9 +141,11 @@ imports: [
 > 1. ng g c read --skipTests
 > 2. ng g c create --skipTests
 
-### 1. Read component, will demonstrate how to receive and read data from app state store
+## read.component.ts
 
-1. import ngrx Store, model interface, app State, rxjs Observable
+> Demonstrate how to receive and read data from app state store
+
+1. import ngrx Store, model interface, AppState, rxjs Observable
 
 ```javascript
 import { Observable } from 'rxjs';
@@ -160,6 +166,77 @@ export class ReadComponent implements OnInit {
     this.tutorials = store.select('tutorial');
   }
 
+  delTutorial(index) {
+    this.store.dispatch(new TutorialActions.RemoveTutorial(index));
+  }
+
   ngOnInit() {}
 }
 ```
+
+5. add a component method to dispatch an RemoveTutorial action method, sending the index reference.
+
+## read.component.html
+
+```html
+<div class="right" *ngIf="tutorials">
+  <h3>Tutorials</h3>
+  <ul>
+    <li
+      (click)="delTutorial(i)"
+      *ngFor="let tutorial of tutorials | async; let i = index"
+    >
+      <a [href]="'//' + tutorial.url" target="_blank">{{ tutorial.name }}</a>
+    </li>
+  </ul>
+</div>
+```
+
+> Read component uses structural directives to render div element, and a list of anchored tutorial names.
+
+> li has click event that fires component method passing i as the index of the li, that comes from ngFor as a keyword.
+
+> Always prepend your absolute external links with protocol or // shortcut for http:// OR https://
+
+---
+
+## create.component.ts
+
+1. import ngrx Store, action methods, AppState, model interface
+
+```javascript
+import { Store } from '@ngrx/store';
+import { AppState } from '../app.state';
+import { Tutorial } from '../models/tutorial.model';
+import * as TutorialActions from '../actions/tutorial.actions.ts';
+```
+
+2. inject Store dependency, same as above
+3. add a component method to dispatch an AddTutorial action method, sending a name, and url params.
+
+```javascript
+addTutorial(name, url) {
+    this.store.dispatch(
+      new TutorialActions.AddTutorial(<Tutorial>{
+        name: name,
+        url: url
+      })
+    );
+  }
+```
+
+## create.component.html
+
+```html
+<div class="left">
+  <input type="text" placeholder="name" #name />
+  <input type="text" placeholder="url" #url />
+  <button (click)="addTutorial(name.value, url.value)">Add a Tutorial</button>
+</div>
+```
+
+> Two input elements with template reference variable.
+
+> Button with click event that fires component method sending the values of the referenced variable as params.
+
+## Add components to app.component.ts
