@@ -1,27 +1,165 @@
 # AngularNgrxStore
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 8.0.3.
+## Create model interface file
 
-## Development server
+```javascript
+export interface Tutorial {
+  name: string;
+  url: string;
+}
+```
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+---
 
-## Code scaffolding
+## Create actions file
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+1.  import Action store and model interface
 
-## Build
+```javascript
+import { Action } from '@ngrx/store';
+import { Tutorial } from '../models/tutorial.model';
+```
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
+2. declare the action.types
 
-## Running unit tests
+```javascript
+export const ADD_TUTORIAL = '[TUTORIAL] Add';
+export const REMOVE_TUTORIAL = '[TUTORIAL] Remove';
+```
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+3. Export Action functions
 
-## Running end-to-end tests
+```javascript
+export class AddTutorial implements Action {
+  readonly type = ADD_TUTORIAL;
 
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
+  constructor(public payload: Tutorial) {}
+}
 
-## Further help
+export class RemoveTutorial implements Action {
+  readonly type = REMOVE_TUTORIAL;
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
+  constructor(public payload: number) {}
+}
+```
+
+4. Export Actions type which are the class
+
+```javascript
+export type Actions = AddTutorial | RemoveTutorial;
+```
+
+---
+
+## Create Reducer file
+
+1. import Action store, model interface and TutorialActions
+
+```javascript
+import { Action } from '@ngrx/store';
+import { Tutorial } from '../models/tutorial.model';
+import * as TutorialActions from '../actions/tutorial.actions';
+```
+
+2. Create an initialState
+   > Reducer can have optional initial state
+
+```javascript
+const initialState: Tutorial = {
+  name: 'Initial Tutorial',
+  url: 'http://google.com'
+};
+```
+
+3. Create reducer function
+   > Reducer function accepts state and action params
+
+```javascript
+export function reducer(
+  state: Tutorial[] = [initialState],
+  action: TutorialActions.Actions
+) {
+  switch (action.type) {
+    case TutorialActions.ADD_TUTORIAL:
+      return [...state, action.payload];
+    default:
+      return state;
+  }
+}
+```
+
+`The Reducer function uses a switch statement that accepts an action.type to decides which action function to run, returning a modified state.`
+
+---
+
+## Create app state file
+
+1. import model interface, same as above
+2. export interface App State
+
+```javascript
+export interface AppState {
+  readonly tutorial: Tutorial[];
+}
+```
+
+`AppState can have multiple models`
+
+---
+
+## Connect store and reducer to root app
+
+> app.module.ts
+
+1. import StoreModule and reducer
+
+```javascript
+import { StoreModule } from '@ngrx/store';
+import { reducer } from './reducers/tutorial.reducer.ts';
+```
+
+2. inject imports
+
+```javascript
+imports: [
+  StoreModule.forRoot({
+    tutorial: reducer
+  })
+];
+```
+
+`StoreModule is using store reducer name as tutorial`
+
+---
+
+## Create two components named read and create
+
+> 1. ng g c read --skipTests
+> 2. ng g c create --skipTests
+
+### 1. Read component, will demonstrate how to receive and read data from app state store
+
+1. import ngrx Store, model interface, app State, rxjs Observable
+
+```javascript
+import { Observable } from 'rxjs';
+import { Store } from '@ngrx/store';
+import { Tutorial } from '../models/tutorial.model';
+import { AppState } from '../app.state';
+```
+
+2. Define a property of type Observable model interface array
+3. inject dependency of store type AppState
+4. in constructor assign property to access store of particular state
+
+```javascript
+export class ReadComponent implements OnInit {
+  tutorials: Observable<Tutorial[]>;
+
+  constructor(private store: Store<AppState>) {
+    this.tutorials = store.select('tutorial');
+  }
+
+  ngOnInit() {}
+}
+```
